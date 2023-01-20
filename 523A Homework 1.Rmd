@@ -1,0 +1,23 @@
+---
+title: "523A Homework 1"
+author: "Ben Lyons"
+date: "2023-01-20"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+print("Hello, world!")
+```
+
+```{r}
+library(tidyverse)
+summary(cars)
+ggplot(data = cars) +
+  geom_smooth(mapping = aes(speed, dist)) +
+  labs(title = "Speed and Stopping Distance", x = "Speed (mph)", y = "Distance (feet)")
+```
+
