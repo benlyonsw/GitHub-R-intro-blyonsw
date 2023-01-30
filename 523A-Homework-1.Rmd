@@ -1,0 +1,144 @@
+---
+title: "523A Homework 1"
+author: "Ben Lyons"
+date: "2023-01-20"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+print("Hello, world!")
+```
+
+```{r}
+library(ggplot2)
+summary(cars)
+ggplot(data = cars) +
+  geom_smooth(mapping = aes(speed, dist)) +
+  labs(title = "Speed and Stopping Distance", x = "Speed (mph)", y = "Distance (feet)")
+```
+
+## 1.2 - Spatial Data
+
+```{r}
+source("setup.r")
+```
+
+```{r}
+counties <- counties(state = "CO")
+```
+
+```{r}
+roads <- roads(state = "CO", county = "Larimer")
+```
+
+```{r}
+tmap_mode("view")
+```
+
+```{r}
+qtm(counties) +
+  qtm(roads)
+```
+
+```{r}
+class(counties)
+```
+
+```{r}
+poudre_hwy <- roads %>%
+  filter(FULLNAME == "Poudre Canyon Hwy")
+qtm(poudre_hwy)
+```
+
+```{r}
+poudre_points <- data.frame(name = c("Mishawaka", "Rustic", "Blue Lake Trailhead"),
+                            long = c(-105.35634, -105.58159, -105.85563),
+                            lat = c(40.68752, 40.69687, 40.57960))
+```
+
+```{r}
+poudre_points_sf <- st_as_sf(poudre_points, coords = c("long", "lat"), crs = 4326)
+
+qtm(poudre_hwy)+
+  qtm(poudre_points_sf)
+```
+
+```{r}
+poudre_points_prj <- st_transform(poudre_points_sf, st_crs(counties))
+```
+
+```{r}
+library(elevatr)
+elevation <- get_elev_raster(counties, z = 7)
+```
+
+```{r}
+tm_shape(elevation)+
+  tm_raster(style = "cont", title = "Elevation (m)")
+```
+
+```{r}
+elevation <- rast(elevation)
+names(elevation) <- "Elevation"
+```
+
+```{r}
+elevation_crop <- crop(elevation, ext(roads))
+
+tm_shape(elevation_crop)+
+  tm_raster(style = "cont")
+```
+
+```{r}
+tm_shape(elevation, bbox = st_bbox(poudre_hwy))+
+  tm_raster(style = "cont", title = "Elevation (m)")+
+tm_shape(poudre_hwy)+
+  tm_lines()+
+tm_shape(poudre_points_prj)+
+  tm_dots(size = 0.2)
+```
+
+## Exercises
+
+### Question 1
+
+```{r}
+new <- counties %>%
+  filter(NAME %in% c('Larimer', 'Boulder', 'Pueblo'))
+```
+
+### Question 2
+
+```{r}
+tm_shape(new) +
+  tm_polygons("ALAND")
+```
+
+```{r}
+tm_shape(new) +
+  tm_polygons("AWATER", palette = "RdYlBu")
+```
+
+### Question 3
+
+```{r}
+library(dplyr)
+poudre_coords <- poudre_points %>%
+  select(lat, long)
+```
+
+```{r}
+coords_matrix <- matrix(c(40.68752, -105.3563, 40.69687, -105.5816, 40.57960, -105.8556), nrow = 3, ncol = 2, byrow = TRUE)
+```
+
+```{r}
+library(terra)
+
+poudre_points_prj$elevation <- terra::extract(elevation, poudre_points_prj)$Elevation
+```
